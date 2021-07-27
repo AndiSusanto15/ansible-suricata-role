@@ -1,0 +1,100 @@
+---
+- name: Install required packages
+  apt:
+    name:
+      - software-properties-common
+      - libpcre3
+      - libpcre3-dbg
+      - libpcre3-dev
+      - build-essential
+      - libpcap-dev
+      - libnet1-dev
+      - libyaml-0-2
+      - libyaml-dev
+      - pkg-config
+      - zlib1g
+      - zlib1g-dev
+      - libcap-ng-dev
+      - libcap-ng0
+      - make
+      - libmagic-dev
+      - libgeoip-dev
+      - liblua5.1-dev
+      - libhiredis-dev
+      - libevent-dev
+      - python-yaml
+      - rustc
+      - cargo
+      - libnetfilter-queue-dev
+      - libnetfilter-queue1
+      - libnetfilter-log-dev
+      - libnetfilter-log1
+      - libnfnetlink-dev
+      - libnfnetlink0
+      - python3-pip
+    state: present
+
+- name: Update pip3 latest
+  pip:
+    name: pip
+    extra_args: --upgrade
+    executable: pip3
+
+- name: Install suricata-update via pip3
+  pip:
+    name: suricata-update
+    extra_args: --upgrade
+    executable: pip3
+
+- name: Add Suricata APT repository
+  apt_repository: 
+    repo: 'ppa:oisf/suricata-stable' 
+    state: present
+
+- name: Install suricata packages
+  apt: 
+    name: suricata
+    state: latest
+    update_cache: yes
+
+- name: Update suricata rules
+  command: suricata-update
+  register: suricata_update
+  ignore_errors: yes
+
+- name: Debug suricata_update
+  debug:
+    var: suricata_update
+
+- name: Backup config suricata.yaml 
+  command: mv /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml.old
+
+- name: Copy config suricata.yaml
+  template:
+    src: suricata.yaml.j2
+    dest: /etc/suricata/suricata.yaml
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Restart suricata
+  systemd:
+    name: suricata
+    state: restarted
+
+- name: Check suricata
+  shell: tail -n 10 /var/log/suricata/suricata.log
+  register: check_suricata
+
+- name: Check output
+  debug:
+    var: check_suricata
+
+- name: Creates a cron update-suricata rules
+  cron:
+    name: update suricata rules
+    minute: "0"
+    hour: "1"
+    user: root
+    job: "suricata-update"
+    cron_file: suricata-rules-autoupdate

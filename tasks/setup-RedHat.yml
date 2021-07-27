@@ -1,0 +1,82 @@
+---
+- name: Install required packages
+  yum:
+    name:
+      - gcc
+      - libpcap-devel
+      - pcre-devel
+      - libyaml-devel
+      - file-devel
+      - zlib-devel
+      - jansson-devel
+      - nss-devel
+      - libcap-ng-devel
+      - libnet-devel
+      - tar
+      - make
+      - libnetfilter_queue-devel
+      - lua-devel
+      - PyYAML
+      - libmaxminddb-devel
+      - rustc
+      - cargo
+      - lz4-devel
+      - yum-plugin-copr
+      - python-pip
+      - python3-pip
+    state: present
+
+- name: Enable copr suricata repo
+  shell: yum copr enable @oisf/suricata-6.0 -y
+
+- name: Install suricata packages
+  yum: 
+    name: suricata
+    state: latest
+
+- name: Update suricata rules
+  command: suricata-update
+  register: suricata_update
+  ignore_errors: yes
+
+- name: Debug suricata_update
+  debug:
+    var: suricata_update
+
+- name: Backup config suricata.yaml 
+  command: mv /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml.old
+
+- name: Copy config suricata.yaml
+  template:
+    src: suricata.yaml.j2
+    dest: /etc/suricata/suricata.yaml
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Ensure permission 0755 in /var/log/suricata
+  file:
+    path: /var/log/suricata
+    mode: 0755
+
+- name: Restart suricata
+  systemd:
+    name: suricata
+    state: restarted
+
+- name: Check suricata
+  shell: tail -n 10 /var/log/suricata/suricata.log
+  register: check_suricata
+
+- name: Check output
+  debug:
+    var: check_suricata
+
+- name: Creates a cron update-suricata rules
+  cron:
+    name: update suricata rules
+    minute: "0"
+    hour: "1"
+    user: root
+    job: "suricata-update"
+    cron_file: suricata-rules-autoupdate
