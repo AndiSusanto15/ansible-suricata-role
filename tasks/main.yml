@@ -5,3 +5,10 @@
 
 - include_tasks: setup-Debian.yml
   when: ansible_os_family == 'Debian'
+
+- name: Copy logrotate
+  template:
+    dest: /etc/logrotate.d/suricata
+    src: logroatate.j2
+  tags: logrotate
+  notify: restart logrotate
