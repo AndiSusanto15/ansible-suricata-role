@@ -34,6 +34,17 @@
       - python3-pip
     state: present
 
+- name: Add Suricata APT repository
+  apt_repository: 
+    repo: 'ppa:oisf/suricata-stable' 
+    state: present
+
+- name: Install suricata packages
+  apt: 
+    name: suricata
+    state: latest
+    update_cache: yes
+
 - name: Update pip3 latest
   pip:
     name: pip
@@ -45,17 +56,6 @@
     name: suricata-update
     extra_args: --upgrade
     executable: pip3
-
-- name: Add Suricata APT repository
-  apt_repository: 
-    repo: 'ppa:oisf/suricata-stable' 
-    state: present
-
-- name: Install suricata packages
-  apt: 
-    name: suricata
-    state: latest
-    update_cache: yes
 
 - name: Update suricata rules
   command: suricata-update
