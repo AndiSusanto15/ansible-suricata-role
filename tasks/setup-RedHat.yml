@@ -37,11 +37,11 @@
 - name: Update suricata rules
   command: suricata-update
   register: suricata_update
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Debug suricata_update
   debug:
-    var: suricata_update
+    var: suricata_update.stdout_lines
 
 - name: Backup config suricata.yaml 
   command: mv /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml.old
@@ -53,16 +53,12 @@
     mode: '0644'
     owner: root
     group: root
+  notify: restart suricata
 
 - name: Ensure permission 0755 in /var/log/suricata
   file:
     path: /var/log/suricata
     mode: 0755
-
-- name: Restart suricata
-  systemd:
-    name: suricata
-    state: restarted
 
 - name: Check suricata
   shell: tail -n 10 /var/log/suricata/suricata.log
@@ -70,7 +66,7 @@
 
 - name: Check output
   debug:
-    var: check_suricata
+    var: check_suricata.stdout_lines
 
 - name: Creates a cron update-suricata rules
   cron:

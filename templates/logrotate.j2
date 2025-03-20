@@ -1,9 +1,10 @@
 /var/log/suricata/*.log /var/log/suricata/*.json
 {
-    maxsize 100M
+    daily
+    maxsize 2G
     rotate 3
     missingok
-    nocompress
+    compress
     create
     sharedscripts
     postrotate

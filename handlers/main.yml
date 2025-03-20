@@ -4,3 +4,8 @@
   service:
     name: logrotate
     state: restarted
+
+- name: restart suricata
+  service:
+    name: logrotate
+    state: restarted
